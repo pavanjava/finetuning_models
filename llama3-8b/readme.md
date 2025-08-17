@@ -1,2 +1,2 @@
-### for dataset you can ref to:
+### dataset:
 - https://huggingface.co/datasets/pavanmantha/pubmedqa-dataset
