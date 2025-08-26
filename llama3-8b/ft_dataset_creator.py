@@ -48,11 +48,20 @@ class FinetuningDatasetCreator:
             print(f"Error pushing to hub: {e}")
             print("Make sure you're logged in with: huggingface-cli login")
 
+    def create_ft_dataset_from_raw(self):
+        df = pd.read_csv("../data/pubmedqa.csv")
+        print(df.columns)
+        ft_dataset = df[["question", "long_answer"]]
+        print(ft_dataset.head())
+        ft_dataset.to_csv("../data/ft_pubmedqa.csv", index=False)
+
 if __name__ == '__main__':
-    df = pd.read_csv('ft_pubmedqa.csv')
-    ft_dataset_creator = FinetuningDatasetCreator()
-    dataset_dict = ft_dataset_creator.create_hugging_face_dataset(df)
+
+    df = pd.read_csv('../data/ft_pubmedqa.csv')
+    print(df.head())
+    #ft_dataset_creator = FinetuningDatasetCreator()
+    #dataset_dict = ft_dataset_creator.create_hugging_face_dataset(df)
 
     # Push to Hugging Face Hub (recommended)
-    print("\nPushing to Hugging Face Hub...")
-    ft_dataset_creator.push_to_hub(dataset_dict, repo_name="pavanmantha/pubmedqa-dataset", token ="hf_", private=False)
+    #print("\nPushing to Hugging Face Hub...")
+    #ft_dataset_creator.push_to_hub(dataset_dict, repo_name="pavanmantha/pubmedqa-dataset", token ="hf_", private=False)
