@@ -1,7 +1,7 @@
 import pandas as pd
 from datasets import DatasetDict, Dataset
 from sklearn.model_selection import train_test_split
-
+import json
 
 class FinetuningDatasetCreator:
     def __init__(self):
@@ -55,11 +55,26 @@ class FinetuningDatasetCreator:
         print(ft_dataset.head())
         ft_dataset.to_csv("../data/ft_pubmedqa.csv", index=False)
 
+    def create_jsonl_format(self, df, output_file_path):
+        with open(output_file_path, 'w', encoding='utf-8') as f:
+            for _, row in df.iterrows():
+                jsonl_entry = {
+                    "messages": [
+                        {"role": "user", "content": row['question']},
+                        {"role": "assistant", "content": row['long_answer']}
+                    ]
+                }
+                f.write(json.dumps(jsonl_entry, ensure_ascii=False) + '\n')
+
+        print(f"JSONL dataset created with {len(df)} entries at: {output_file_path}")
+
 if __name__ == '__main__':
 
     df = pd.read_csv('../data/ft_pubmedqa.csv')
     print(df.head())
-    #ft_dataset_creator = FinetuningDatasetCreator()
+    ft_dataset_creator = FinetuningDatasetCreator()
+    ft_dataset_creator.create_jsonl_format(df, "../data/ft_pubmedqa.jsonl")
+
     #dataset_dict = ft_dataset_creator.create_hugging_face_dataset(df)
 
     # Push to Hugging Face Hub (recommended)
