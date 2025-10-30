@@ -210,3 +210,5 @@ __marimo__/
 */.idea
 ../data/
 data
+**/ppo/reward_model
+**/ppo/sft_finetuned_model
