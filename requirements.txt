@@ -3,6 +3,7 @@ numpy
 transformers[torch]
 scikit-learn
 datasets
+sentence-transformers
 
 bitsandbytes
 accelerate
