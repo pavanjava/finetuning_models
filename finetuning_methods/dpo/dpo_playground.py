@@ -1,49 +1,31 @@
+import os
+os.environ["ACCELERATE_MIXED_PRECISION"] = "no"
+
+# Monkey-patch Accelerate to disable the buggy conversion
+import accelerate.utils.operations as ops
+
+def patched_convert(tensor, *args, **kwargs):
+    return tensor  # Don't convert, return as-is
+
+ops.convert_to_fp16 = patched_convert
+ops._convert_to_fp16 = patched_convert
+
+# NOW import everything else
 from datasets import load_dataset
 from trl import DPOConfig, DPOTrainer
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
-# Load Dataset and Model
 dataset = load_dataset('inclusionAI/Ling-Coder-DPO')
 model_name = 'Qwen/Qwen2.5-0.5B-Instruct'
-model = AutoModelForCausalLM.from_pretrained(model_name,device_map="cpu")
+
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-tokenizer.pad_token = tokenizer.eos_token  # set padding token
+tokenizer.pad_token = tokenizer.eos_token
 
-# generate sample code with base model
-generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
-
-
-def format_chat_prompt(user_input):
-    """
-    Formats user input into the chat template format with <|im_start|> and <|im_end|> tags.
-
-    Args:
-        user_input (str): The input text from the user.
-
-    Returns:
-        str: Formatted prompt for the model.
-    """
-
-    # Format user message
-    user_prompt = f"<|im_start|>user:\n{user_input}<|im_end|>\n"
-
-    # Start assistant's turn
-    assistant_prompt = "<|im_start|>assistant:\n"
-
-    # Combine prompts
-    formatted_prompt = user_prompt + assistant_prompt
-
-    return formatted_prompt
-
-
-prompt = format_chat_prompt(str(dataset['train']['prompt'][0]))
-print(prompt)
-
-output = generator(prompt, max_length=512, max_new_tokens=512, truncation=True,
-                   num_return_sequences=1, temperature=0.8)
-print(output)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name,
+    dtype=torch.float16,
+)
 
 ft_model_name = model_name.split('/')[1].replace('Instruct', 'DPO')
 
@@ -51,23 +33,23 @@ training_args = DPOConfig(
     num_train_epochs=3,
     output_dir=f"{ft_model_name}",
     logging_steps=25,
-    per_device_train_batch_size=8,
-    # per_device_eval_batch_size=8, # enable if your dataset has eval split
-    # load_best_model_at_end=True, # requires the save and eval strategy to match
-    # metric_for_best_model='eval_loss',
+    per_device_train_batch_size=16,
+    gradient_accumulation_steps=2,
+    learning_rate=1e-4,
+    optim="adamw_torch_fused",
     save_strategy='epoch',
-    # eval_strategy='epoch', # enable if your dataset has eval split
-    # eval_steps=1,
-    report_to="none",  # Add this line not log into any infra
+    report_to="none",
+    fp16=True
 )
-
-print(f'training args set: {training_args}')
 
 trainer = DPOTrainer(
     args=training_args,
     model=model,
     processing_class=tokenizer,
     train_dataset=dataset['train'],
+    ref_model=None,
 )
+
+print(f"Memory before training: {torch.cuda.memory_allocated(0)/1024**3:.2f} GB")
 
 trainer.train()
