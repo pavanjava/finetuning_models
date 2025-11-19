@@ -1,21 +1,28 @@
+# data wrangling
 pandas
 numpy
-transformers[torch]
+matplotlib
 scikit-learn
+
+# finetuning deps
+transformers[torch]
 datasets
 sentence-transformers
-
 bitsandbytes
 accelerate
 peft
 trl
-cut_cross_entropy
-ipywidgets
 sentencepiece
-protobuf
-huggingface_hub
-hf_transfer
+huggingface-hub
 transformers
+
+# misc
 packaging
 ninja
-matplotlib
+protobuf
+
+# llms
+openai-whisper>=20250625
+google-genai>=1.51.0
+openai>=2.8.1
+anthropic>=0.74.0
