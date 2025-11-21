@@ -14,7 +14,8 @@ peft
 trl
 sentencepiece
 huggingface-hub
-transformers
+torchcodec
+FFmpeg>=
 
 # misc
 packaging
