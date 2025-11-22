@@ -24,10 +24,4 @@ print(sampling_rate)
 common_voice = common_voice.cast_column("audio", Audio(sampling_rate=sampling_rate, num_channels=1))
 print(common_voice["train"].features)
 
-def prepare_dataset(sample):
-    audio = sample["audio"]
-    sample = processor(audio["array"], sampling_rate=audio["sampling_rate"], transcript=sample["transcript"])
-    sample["input_length"]=len(audio["array"])/audio["sampling_rate"]
-    return sample
-
-common_voice = common_voice.map(prepare_dataset, remove_columns=common_voice.column_names["train"], num_proc=1)
+#todo: actual tuning goes after this.
